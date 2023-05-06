@@ -1,0 +1,86 @@
+#apiVersion: monitoring.coreos.com/v1
+#kind: ServiceMonitor
+#metadata:
+#  name: kubernetes-svc-monitor
+#  namespace: monitoring
+#  labels:
+#    team: frontend
+#spec:
+#  namespaceSelector:
+#    any: true
+#  selector:
+#    matchLabels:
+#      component: apiserver
+#  endpoints:
+#  - port: https
+#    tlsConfig:
+#      caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+#    bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+#    scheme: https
+#---
+#apiVersion: monitoring.coreos.com/v1
+#kind: ServiceMonitor
+#metadata:
+#  name: kubelet-svc-monitor
+#  namespace: monitoring
+#  labels:
+#    team: frontend
+#spec:
+#  namespaceSelector:
+#    any: true
+#  selector:
+#    matchLabels:
+#      app.kubernetes.io/managed-by: prometheus-operator
+#  endpoints:
+#  - port: https-metrics
+#    tlsConfig:
+#      caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+#      insecureSkipVerify: true
+#    bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+#    scheme: https
+#    relabelings:
+#    - targetLabel: __address__
+#      replacement: kubernetes.default.svc:443
+#    - sourceLabels: [__meta_kubernetes_node_name]
+#      regex: (.+)
+#      targetLabel: __metrics_path__
+#      replacement: /api/v1/nodes/${1}/proxy/metrics/cadvisor
+#    - action: labelmap
+#      regex: __meta_kubernetes_node_label_(.+)
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: rabbitmq-svc-monitor
+  namespace: monitoring
+  labels:
+    team: frontend
+spec:
+  namespaceSelector:
+    matchNames: ["default"]
+  selector:
+    matchLabels:
+      operated-prometheus: "true"
+  endpoints:
+  - port: metric
+    scheme: http
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: rabbitmq-svc-prometheusrule
+  namespace: monitoring
+  labels:
+    team: frontend
+spec:
+  groups:
+  - name: rabbitmq-queue-rule
+    interval: 1m
+    rules:
+    - alert: messagePileUp
+      annotations:
+        description: messages in a queue pile up for 5m
+      expr: rabbitmq_queue_messages{queue=~".+"}>5
+      for: 5m

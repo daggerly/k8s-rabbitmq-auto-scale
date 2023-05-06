@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    run: producer
+  name: producer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: producer
+  template:
+    metadata:
+      labels:
+        app: producer
+    spec:
+      containers:
+      - image: dagger003/mytools:0.1
+        imagePullPolicy: IfNotPresent
+        name: producer
+        command: ["sh", "-c", "python /producer.py testrabbit1"]
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    run: consumer
+  name: consumer
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: comsumer
+  template:
+    metadata:
+      labels:
+        app: comsumer
+    spec:
+      containers:
+      - image: dagger003/mytools:0.1
+        imagePullPolicy: IfNotPresent
+        name: comsumer
+        command: ["sh", "-c", "python /consumer.py testrabbit1"]

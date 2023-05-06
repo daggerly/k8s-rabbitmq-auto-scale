@@ -1,0 +1,20 @@
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  name: inst
+  namespace: monitoring
+spec:
+  imagePullPolicy: IfNotPresent
+  serviceAccountName: prometheus
+  serviceMonitorSelector:
+    matchLabels:
+      team: frontend
+  podMonitorSelector:
+    matchLabels:
+      team: frontend
+  ruleSelector:
+    matchLabels:
+      team: frontend
+  resources:
+    requests:
+      memory: 400Mi
